@@ -173,7 +173,7 @@ void ImageConv_v1(queue &q, float *image_in, float *image_out, float *filter_in,
       }
     );
   });
-  sycl::free(device_data, q);
+  sycl::free(filter_buf, q);
 }
 
 
