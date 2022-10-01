@@ -50,50 +50,31 @@ static float gaussianBlurFilter[25] = {
    1.0f,  4.0f,  7.0f,  4.0f, 1.0f};
 static const int gaussianBlurFilterWidth = 5;
 
-static float sharpenFilterFactor = 8.0f;
-static float sharpenFilter[25] = {
-    -1.0f, -1.0f, -1.0f, -1.0f, -1.0f,
-    -1.0f,  2.0f,  2.0f,  2.0f, -1.0f,
-    -1.0f,  2.0f,  8.0f,  2.0f, -1.0f,
-    -1.0f,  2.0f,  2.0f,  2.0f, -1.0f,
-    -1.0f, -1.0f, -1.0f, -1.0f, -1.0f};
-static const int sharpenFilterWidth = 5;
 
-static float edgeSharpenFilterFactor = 1.0f;
-static float edgeSharpenFilter[9] = {
+static float edgeSobelHorizontalFactor = 1.0f;
+static float edgeSobelHorizontal[9] = {
     1.0f,  1.0f, 1.0f,
-    1.0f, -7.0f, 1.0f,
+    0.0f,  0.0f, 0.0f,
     1.0f,  1.0f, 1.0f};
-static const int edgeSharpenFilterWidth = 3;
+static const int edgeSobelHorizontalWidth = 3;
 
-static float vertEdgeDetectFilterFactor = 1.0f;
-static float vertEdgeDetectFilter[25] = {
-     0,  0, -1.0f,  0,  0,
-     0,  0, -1.0f,  0,  0,
-     0,  0,  4.0f,  0,  0,
-     0,  0, -1.0f,  0,  0,
-     0,  0, -1.0f,  0,  0};
-static const int vertEdgeDetectFilterWidth = 5;
+static float edgeSobelVerticalFactor = 1.0f;
+static float edgeSobelVertical[9] = {
+    1.0f,  0.0f, 1.0f,
+    1.0f,  0.0f, 1.0f,
+    1.0f,  0.0f, 1.0f};
+static const int edgeSobelVerticalWidth = 3;
 
-static float embossFilterFactor = 1.0f;
-static float embossFilter[9] = {
-    2.0f,  0.0f,  0.0f,
-    0.0f, -1.0f,  0.0f,
-    0.0f,  0.0f, -1.0f};
-static const int embossFilterWidth = 3;
 
 enum filterList
 {
     GAUSSIAN_BLUR,
-    SHARPEN,
-    EDGE_SHARPEN,
-    VERT_EDGE_DETECT,
-    EMBOSS,
-    FILTER_LIST_SIZE
+    SOBEl_HORIZONTAL,
+    SOBEL_VERTICAL
 };
 //static const int filterSelection = VERT_EDGE_DETECT;
 //static const int filterSelection = GAUSSIAN_BLUR;
-static const int filterSelection = EDGE_SHARPEN;
+static const int filterSelection = GAUSSIAN_BLUR;
 //static const int filterSelection = EMBOSS;
 
 #define IMAGE_SIZE (720*1080)
@@ -121,7 +102,8 @@ void ImageConv_v1(queue &q, float *image_in, float *image_out, float *filter_in,
     range<2> num_items{ImageRows, ImageCols};
 
     // Create buffers that hold the filter shared between the host and the devices.
-    buffer<float, 1> filter_buf(filter_in, range<1>(FilterWidth*FilterWidth));
+    float *filter_buf = sycl::malloc_device<float>(FilterWidth*FilterWidth, q);
+    q.memcpy(filter_buf, filter_in, sizeof(float) * FilterWidth * FilterWidth);
 
     /* Compute the filter width (intentionally truncate) */
     int halfFilterWidth = (int)FilterWidth/2;
@@ -137,7 +119,7 @@ void ImageConv_v1(queue &q, float *image_in, float *image_out, float *filter_in,
       auto dstPtr = image_out_buf.get_access<access::mode::write>(h);
 
       // create an accessor to the filter
-      auto f_acc = filter_buf.get_access<access::mode::read>(h);
+      //auto f_acc = filter_buf.get_access<access::mode::read>(h);
 
       // Use parallel_for to run image convolution in parallel on device. This
       // executes the kernel.
@@ -180,7 +162,7 @@ void ImageConv_v1(queue &q, float *image_in, float *image_out, float *filter_in,
               c = (c >= ImageCols) ? ImageCols-1 : c;       
               
               sum += srcPtr[r*ImageCols+c] *
-                    f_acc[(k+halfFilterWidth)*FilterWidth + 
+                    filter_buf[(k+halfFilterWidth)*FilterWidth + 
                         (l+halfFilterWidth)];
           }
         }
@@ -191,6 +173,7 @@ void ImageConv_v1(queue &q, float *image_in, float *image_out, float *filter_in,
       }
     );
   });
+  sycl::free(device_data, q);
 }
 
 
@@ -244,26 +227,6 @@ int main() {
       filterWidth = gaussianBlurFilterWidth;
       filterFactor = gaussianBlurFilterFactor;
       filter = gaussianBlurFilter;
-      break;
-    case SHARPEN:
-      filterWidth = sharpenFilterWidth;
-      filterFactor = sharpenFilterFactor;
-      filter = sharpenFilter;
-      break;
-    case EDGE_SHARPEN:
-      filterWidth = edgeSharpenFilterWidth;
-      filterFactor = edgeSharpenFilterFactor;
-      filter = edgeSharpenFilter;
-      break;
-    case VERT_EDGE_DETECT:
-      filterWidth = vertEdgeDetectFilterWidth;
-      filterFactor = vertEdgeDetectFilterFactor;
-      filter = vertEdgeDetectFilter;
-      break;
-    case EMBOSS:
-      filterWidth = embossFilterWidth;
-      filterFactor = embossFilterFactor;
-      filter = embossFilter;
       break;
     default:
       printf("Invalid filter selection.\n");
