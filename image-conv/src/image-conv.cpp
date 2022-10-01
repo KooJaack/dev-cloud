@@ -41,7 +41,7 @@ class Timer {
 
 static const char* inputImagePath = "./Images/cat.bmp";
 
-static float gaussianBlurFilterFactor = 273.0f;
+static float gaussianBlurFilterFactor = 1.0f;
 static float gaussianBlurFilter[25] = {
    1.0f,  4.0f,  7.0f,  4.0f, 1.0f,
    4.0f, 16.0f, 26.0f, 16.0f, 4.0f,
