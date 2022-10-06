@@ -41,7 +41,7 @@ class Timer {
 
 static const char* inputImagePath = "./Images/cat.bmp";
 
-static float gaussianBlurFilterFactor = 1.0f;
+static float gaussianBlurFilterFactor = 273.0f;
 static float gaussianBlurFilter[25] = {
    1.0f,  4.0f,  7.0f,  4.0f, 1.0f,
    4.0f, 16.0f, 26.0f, 16.0f, 4.0f,
@@ -70,11 +70,11 @@ enum filterList
 {
     GAUSSIAN_BLUR,
     SOBEl_HORIZONTAL,
-    SOBEL_VERTICAL
+    SOBEL_VERTICAL,
 };
 //static const int filterSelection = VERT_EDGE_DETECT;
 //static const int filterSelection = GAUSSIAN_BLUR;
-static const int filterSelection = GAUSSIAN_BLUR;
+static const int filterSelection = EDGE_SHARPEN;
 //static const int filterSelection = EMBOSS;
 
 #define IMAGE_SIZE (720*1080)
@@ -102,8 +102,7 @@ void ImageConv_v1(queue &q, float *image_in, float *image_out, float *filter_in,
     range<2> num_items{ImageRows, ImageCols};
 
     // Create buffers that hold the filter shared between the host and the devices.
-    float *filter_buf = sycl::malloc_device<float>(FilterWidth*FilterWidth, q);
-    q.memcpy(filter_buf, filter_in, sizeof(float) * FilterWidth * FilterWidth);
+    buffer<float, 1> filter_buf(filter_in, range<1>(FilterWidth*FilterWidth));
 
     /* Compute the filter width (intentionally truncate) */
     int halfFilterWidth = (int)FilterWidth/2;
@@ -119,7 +118,7 @@ void ImageConv_v1(queue &q, float *image_in, float *image_out, float *filter_in,
       auto dstPtr = image_out_buf.get_access<access::mode::write>(h);
 
       // create an accessor to the filter
-      //auto f_acc = filter_buf.get_access<access::mode::read>(h);
+      auto f_acc = filter_buf.get_access<access::mode::read>(h);
 
       // Use parallel_for to run image convolution in parallel on device. This
       // executes the kernel.
@@ -162,7 +161,7 @@ void ImageConv_v1(queue &q, float *image_in, float *image_out, float *filter_in,
               c = (c >= ImageCols) ? ImageCols-1 : c;       
               
               sum += srcPtr[r*ImageCols+c] *
-                    filter_buf[(k+halfFilterWidth)*FilterWidth + 
+                    f_acc[(k+halfFilterWidth)*FilterWidth + 
                         (l+halfFilterWidth)];
           }
         }
@@ -173,7 +172,6 @@ void ImageConv_v1(queue &q, float *image_in, float *image_out, float *filter_in,
       }
     );
   });
-  sycl::free(filter_buf, q);
 }
 
 
