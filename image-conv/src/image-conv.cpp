@@ -74,7 +74,7 @@ enum filterList
 };
 //static const int filterSelection = VERT_EDGE_DETECT;
 //static const int filterSelection = GAUSSIAN_BLUR;
-static const int filterSelection = EDGE_SHARPEN;
+static const int filterSelection = SOBEL_VERTICAL;
 //static const int filterSelection = EMBOSS;
 
 #define IMAGE_SIZE (720*1080)
