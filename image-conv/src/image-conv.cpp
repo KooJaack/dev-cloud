@@ -1,43 +1,21 @@
-//==============================================================
-// DPC++ Example
-//
-// Image Convoluton with DPC++
-//
-// Author: Yan Luo
-//
-// Copyright ©  2020-
-//
-// MIT License
-//
 #include <CL/sycl.hpp>
 #include <array>
 #include <iostream>
 #include "dpc_common.hpp"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
 #if FPGA || FPGA_EMULATOR || FPGA_PROFILE
 #include <sycl/ext/intel/fpga_extensions.hpp>
 #endif
 
 using namespace sycl;
 
-// useful header files for image convolution
 #include "utils.h"
 #include "bmp-utils.h"
 #include "gold.h"
-
-
-using Duration = std::chrono::duration<double>;
-class Timer {
- public:
-  Timer() : start(std::chrono::steady_clock::now()) {}
-
-  Duration elapsed() {
-    auto now = std::chrono::steady_clock::now();
-    return std::chrono::duration_cast<Duration>(now - start);
-  }
-
- private:
-  std::chrono::steady_clock::time_point start;
-};
+#include "Timer.h"
 
 static const char* inputImagePath = "./Images/cat.bmp";
 
@@ -87,21 +65,11 @@ typedef std::array<float, array_size> FloatArray;
 void ImageConv_v1(queue &q, float *image_in, float *image_out, float *filter_in, 
     const size_t FilterWidth, const size_t ImageRows, const size_t ImageCols) 
 {
-
-    // We create buffers for the input and output data.
-    //
     buffer<float, 1> image_in_buf(image_in, range<1>(ImageRows*ImageCols));
     buffer<float, 1> image_out_buf(image_out, range<1>(ImageRows*ImageCols));
 
-    //for(int i=0; i<ImageRows; i++) {
-    //  for(int j=0; j<ImageCols; j++)
-    //    std::cout << "image_out[" << i << "," << j << "]=" << (float *)image_out[i*ImageCols+j] << std::endl;
-    //}
+    range<2> pixelsRange{ImageRows, ImageCols};
 
-    // Create the range object for the pixel data.
-    range<2> num_items{ImageRows, ImageCols};
-
-    // Create buffers that hold the filter shared between the host and the devices.
     buffer<float, 1> filter_buf(filter_in, range<1>(FilterWidth*FilterWidth));
 
     /* Compute the filter width (intentionally truncate) */
@@ -126,7 +94,7 @@ void ImageConv_v1(queue &q, float *image_in, float *image_out, float *filter_in,
       //    2nd parameter is the kernel, a lambda that specifies what to do per
       //    work item. The parameter of the lambda is the work item id.
       // DPC++ supports unnamed lambda kernel by default.
-      h.parallel_for(num_items, [=](id<2> item) 
+      h.parallel_for(pixelsRange, [=](id<2> item) 
       { 
 
         // get row and col of the pixel assigned to this work item
