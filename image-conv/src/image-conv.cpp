@@ -210,6 +210,10 @@ int main() {
       filterFactor = gaussianBlurFilterFactor;
       filter = gaussianBlurFilter;
       break;
+	case SOBEL_VERTICAL:
+	  filterWidth = edgeSobelVerticalWidth;
+	  filterFactor = edgeSobelVerticalFactor;
+	  filter = edgeSobelVertical;
     default:
       printf("Invalid filter selection.\n");
       return 1;
