@@ -19,6 +19,15 @@ using namespace sycl;
 
 static const char* inputImagePath = "./Images/cat.bmp";
 
+int width, height, channels;
+unsigned char *img = stbi_load("./Images/dog1.jpg", &width, &height, &channels, 0);
+
+if(img == NULL) {
+	printf("Error in loading the image\n");
+	exit(1);
+}
+printf("Loaded image with a width of %dpx, a height of %dpx and %d channels\n", width, height, channels);
+
 static float gaussianBlurFilterFactor = 273.0f;
 static float gaussianBlurFilter[25] = {
    1.0f,  4.0f,  7.0f,  4.0f, 1.0f,
@@ -27,7 +36,6 @@ static float gaussianBlurFilter[25] = {
    4.0f, 16.0f, 26.0f, 16.0f, 4.0f,
    1.0f,  4.0f,  7.0f,  4.0f, 1.0f};
 static const int gaussianBlurFilterWidth = 5;
-
 
 static float edgeSobelHorizontalFactor = 1.0f;
 static float edgeSobelHorizontal[9] = {
@@ -43,19 +51,16 @@ static float edgeSobelVertical[9] = {
     1.0f,  0.0f, 1.0f};
 static const int edgeSobelVerticalWidth = 3;
 
-
 enum filterList
 {
     GAUSSIAN_BLUR,
     SOBEl_HORIZONTAL,
     SOBEL_VERTICAL,
 };
-//static const int filterSelection = VERT_EDGE_DETECT;
-//static const int filterSelection = GAUSSIAN_BLUR;
-static const int filterSelection = SOBEL_VERTICAL;
-//static const int filterSelection = EMBOSS;
 
-#define IMAGE_SIZE (720*1080)
+static const int filterSelection = SOBEL_VERTICAL;
+
+#define IMAGE_SIZE (602*380)
 constexpr size_t array_size = IMAGE_SIZE;
 typedef std::array<float, array_size> FloatArray;
 
@@ -65,8 +70,8 @@ typedef std::array<float, array_size> FloatArray;
 void ImageConv_v1(queue &q, float *image_in, float *image_out, float *filter_in, 
     const size_t FilterWidth, const size_t ImageRows, const size_t ImageCols) 
 {
-    buffer<float, 1> image_in_buf(image_in, range<1>(ImageRows*ImageCols));
-    buffer<float, 1> image_out_buf(image_out, range<1>(ImageRows*ImageCols));
+    buffer<float, 1> image_in_buf(image_in, range<1>(ImageRows*ImageCols*channels));
+    buffer<float, 1> image_out_buf(image_out, range<1>(ImageRows*ImageCols*channels));
 
     range<2> pixelsRange{ImageRows, ImageCols};
 
@@ -110,7 +115,9 @@ void ImageConv_v1(queue &q, float *image_in, float *image_out, float *filter_in,
         // Each work-item iterates around its local area based on the
         // size of the filter 
 
-        float sum = 0.0f;
+        char sum = 0;
+		char sum2 = 0;
+		char sum3 = 0;
 
         /* Apply the filter to the neighborhood */
         for (int k = -halfFilterWidth; k <= halfFilterWidth; k++) 
@@ -127,19 +134,28 @@ void ImageConv_v1(queue &q, float *image_in, float *image_out, float *filter_in,
               c = (c < 0) ? 0 : c;
               r = (r >= ImageRows) ? ImageRows-1 : r;
               c = (c >= ImageCols) ? ImageCols-1 : c;       
-              
-              sum += srcPtr[r*ImageCols+c] *
+			  
+              sum += srcPtr[r*ImageCols+c*channels] *
+                    f_acc[(k+halfFilterWidth)*FilterWidth + 
+                        (l+halfFilterWidth)];
+			  sum2 += srcPtr[r*ImageCols+(c*channels)+1] *
+                    f_acc[(k+halfFilterWidth)*FilterWidth + 
+                        (l+halfFilterWidth)];
+			  sum3 += srcPtr[r*ImageCols+(c*channels)+2] *
                     f_acc[(k+halfFilterWidth)*FilterWidth + 
                         (l+halfFilterWidth)];
           }
         }
          
         /* Write the new pixel value */
-        dstPtr[row*ImageCols+col] = sum;
-
-      }
+        dstPtr[row*ImageCols+col*channels] = sum;
+		dstPtr[row*ImageCols+col*channels+1] = sum;
+		dstPtr[row*ImageCols+col*channels+2] = sum;
+      } 
     );
   });
+  
+	stbi_write_png("sky.png", width, height, channels, dstPtr, width * channels);    
 }
 
 
@@ -205,6 +221,7 @@ int main() {
   }
 
   /* Read in the BMP image */
+  
   hInputImage = readBmpFloat(inputImagePath, &imageRows, &imageCols);
   printf("imageRows=%d, imageCols=%d\n", imageRows, imageCols);
   printf("filterWidth=%d, \n", filterWidth);
@@ -224,7 +241,7 @@ int main() {
               << q.get_device().get_info<info::device::name>() << "\n";
 
     // Image convolution in DPC++
-    ImageConv_v1(q, hInputImage, hOutputImage, filter, filterWidth, imageRows, imageCols);
+    ImageConv_v1(q, img, hOutputImage, filter, filterWidth, height, width);
   } catch (exception const &e) {
     std::cout << "An exception is caught for image convolution.\n";
     std::terminate();
