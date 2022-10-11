@@ -15,7 +15,6 @@ using namespace sycl;
 #include "utils.h"
 #include "bmp-utils.h"
 #include "gold.h"
-#include "Timer.h"
 
 static const char* inputImagePath = "./Images/cat.bmp";
 
@@ -222,8 +221,6 @@ int main() {
   /* Allocate space for the output image */
 
 
-  Timer t;
-
   try {
     queue q(d_selector, dpc_common::exception_handler);
 
@@ -249,8 +246,6 @@ printf("Loaded image with a width of %dpx, a height of %dpx and %d channels\n", 
     std::cout << "An exception is caught for image convolution.\n";
     std::terminate();
   }
-
-  std::cout << t.elapsed().count() << " seconds\n";
 
   /* Save the output bmp */
   printf("Output image saved as: cat-filtered.bmp\n");
