@@ -66,7 +66,7 @@ void ImageConv_v1(queue &q, unsigned char *image_in, char *image_out, float *fil
 
     range<2> pixelsRange{ImageRows, ImageCols};
 
-    buffer<char, 1> filter_buf(filter_in, range<1>(FilterWidth*FilterWidth));
+    buffer<float, 1> filter_buf(filter_in, range<1>(FilterWidth*FilterWidth));
 
     /* Compute the filter width (intentionally truncate) */
     int halfFilterWidth = (int)FilterWidth/2;
