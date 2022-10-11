@@ -61,12 +61,12 @@ typedef std::array<float, array_size> FloatArray;
 void ImageConv_v1(queue &q, char *image_in, char *image_out, float *filter_in, 
     const size_t FilterWidth, const size_t ImageRows, const size_t ImageCols, const size_t Channels) 
 {
-    buffer<float, 1> image_in_buf(image_in, range<1>(ImageRows*ImageCols*Channels));
-    buffer<float, 1> image_out_buf(image_out, range<1>(ImageRows*ImageCols*Channels));
+    buffer<char, 1> image_in_buf(image_in, range<1>(ImageRows*ImageCols*Channels));
+    buffer<char, 1> image_out_buf(image_out, range<1>(ImageRows*ImageCols*Channels));
 
     range<2> pixelsRange{ImageRows, ImageCols};
 
-    buffer<float, 1> filter_buf(filter_in, range<1>(FilterWidth*FilterWidth));
+    buffer<char, 1> filter_buf(filter_in, range<1>(FilterWidth*FilterWidth));
 
     /* Compute the filter width (intentionally truncate) */
     int halfFilterWidth = (int)FilterWidth/2;
@@ -162,7 +162,7 @@ int main() {
 #endif
 
   float *hInputImage;
-  float *hOutputImage;
+  char *hOutputImage;
 
   int imageRows;
   int imageCols;
@@ -237,7 +237,7 @@ int main() {
 	exit(1);
 	}
 printf("Loaded image with a width of %dpx, a height of %dpx and %d channels\n", width, height, channels);
-  hOutputImage = (float *)malloc( imageRows*imageCols * channels * sizeof(char) );
+  hOutputImage = (char *)malloc( imageRows*imageCols * channels * sizeof(char) );
   for(i=0; i<imageRows*imageCols*channels; i++)
     hOutputImage[i] = 0;
     // Image convolution in DPC++
@@ -252,8 +252,8 @@ printf("Loaded image with a width of %dpx, a height of %dpx and %d channels\n", 
 
   /* Save the output bmp */
   printf("Output image saved as: cat-filtered.bmp\n");
-  writeBmpFloat(hOutputImage, "cat-filtered.bmp", imageRows, imageCols,
-          inputImagePath);
+  //writeBmpFloat(hOutputImage, "cat-filtered.bmp", imageRows, imageCols,
+   //       inputImagePath);
 
 #ifndef FPGA_PROFILE
   /* Verify result */
