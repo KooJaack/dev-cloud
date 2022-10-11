@@ -241,7 +241,7 @@ printf("Loaded image with a width of %dpx, a height of %dpx and %d channels\n", 
   for(i=0; i<imageRows*imageCols*channels; i++)
     hOutputImage[i] = 0;
     // Image convolution in DPC++
-    ImageConv_v1(q, img2, hOutputImage, filter, filterWidth, height, width, channels);
+    ImageConv_v1(q, img, hOutputImage, filter, filterWidth, height, width, channels);
 	
 	stbi_write_png("sky.png", width, height, channels, hOutputImage, width * channels);    
   } catch (exception const &e) {
