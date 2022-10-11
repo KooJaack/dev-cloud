@@ -19,9 +19,6 @@ using namespace sycl;
 
 static const char* inputImagePath = "./Images/cat.bmp";
 
-int width, height, channels;
-unsigned char *img = stbi_load("./Images/dog1.jpg", &width, &height, &channels, 0);
-
 if(img == NULL) {
 	printf("Error in loading the image\n");
 	exit(1);
@@ -68,10 +65,10 @@ typedef std::array<float, array_size> FloatArray;
 // Image Convolution in DPC++ on device: 
 //************************************
 void ImageConv_v1(queue &q, float *image_in, float *image_out, float *filter_in, 
-    const size_t FilterWidth, const size_t ImageRows, const size_t ImageCols) 
+    const size_t FilterWidth, const size_t ImageRows, const size_t ImageCols, const size_t Channels) 
 {
-    buffer<float, 1> image_in_buf(image_in, range<1>(ImageRows*ImageCols*channels));
-    buffer<float, 1> image_out_buf(image_out, range<1>(ImageRows*ImageCols*channels));
+    buffer<float, 1> image_in_buf(image_in, range<1>(ImageRows*ImageCols*Channels));
+    buffer<float, 1> image_out_buf(image_out, range<1>(ImageRows*ImageCols*Channels));
 
     range<2> pixelsRange{ImageRows, ImageCols};
 
@@ -135,27 +132,27 @@ void ImageConv_v1(queue &q, float *image_in, float *image_out, float *filter_in,
               r = (r >= ImageRows) ? ImageRows-1 : r;
               c = (c >= ImageCols) ? ImageCols-1 : c;       
 			  
-              sum += srcPtr[r*ImageCols+c*channels] *
+              sum += srcPtr[r*ImageCols+c*Channels] *
                     f_acc[(k+halfFilterWidth)*FilterWidth + 
                         (l+halfFilterWidth)];
-			  sum2 += srcPtr[r*ImageCols+(c*channels)+1] *
+			  sum2 += srcPtr[r*ImageCols+(c*Channels)+1] *
                     f_acc[(k+halfFilterWidth)*FilterWidth + 
                         (l+halfFilterWidth)];
-			  sum3 += srcPtr[r*ImageCols+(c*channels)+2] *
+			  sum3 += srcPtr[r*ImageCols+(c*Channels)+2] *
                     f_acc[(k+halfFilterWidth)*FilterWidth + 
                         (l+halfFilterWidth)];
           }
         }
          
         /* Write the new pixel value */
-        dstPtr[row*ImageCols+col*channels] = sum;
-		dstPtr[row*ImageCols+col*channels+1] = sum;
-		dstPtr[row*ImageCols+col*channels+2] = sum;
+        dstPtr[row*ImageCols+col*Channels] = sum;
+		dstPtr[row*ImageCols+col*Channels+1] = sum;
+		dstPtr[row*ImageCols+col*Channels+2] = sum;
       } 
     );
   });
   
-	stbi_write_png("sky.png", width, height, channels, dstPtr, width * channels);    
+	stbi_write_png("sky.png", ImageCols, ImageRows, Channels, dstPtr, ImageCols * Channels);    
 }
 
 
@@ -244,8 +241,10 @@ int main() {
     std::cout << "Running on device: "
               << q.get_device().get_info<info::device::name>() << "\n";
 
+	int width, height, channels;
+	unsigned char *img = stbi_load("./Images/dog1.jpg", &width, &height, &channels, 0);
     // Image convolution in DPC++
-    ImageConv_v1(q, img, hOutputImage, filter, filterWidth, height, width);
+    ImageConv_v1(q, img, hOutputImage, filter, filterWidth, height, width, channels);
   } catch (exception const &e) {
     std::cout << "An exception is caught for image convolution.\n";
     std::terminate();
