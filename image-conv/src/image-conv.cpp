@@ -19,12 +19,6 @@ using namespace sycl;
 
 static const char* inputImagePath = "./Images/cat.bmp";
 
-if(img == NULL) {
-	printf("Error in loading the image\n");
-	exit(1);
-}
-printf("Loaded image with a width of %dpx, a height of %dpx and %d channels\n", width, height, channels);
-
 static float gaussianBlurFilterFactor = 273.0f;
 static float gaussianBlurFilter[25] = {
    1.0f,  4.0f,  7.0f,  4.0f, 1.0f,
@@ -243,6 +237,11 @@ int main() {
 
 	int width, height, channels;
 	unsigned char *img = stbi_load("./Images/dog1.jpg", &width, &height, &channels, 0);
+	if(img == NULL) {
+	printf("Error in loading the image\n");
+	exit(1);
+	}
+printf("Loaded image with a width of %dpx, a height of %dpx and %d channels\n", width, height, channels);
     // Image convolution in DPC++
     ImageConv_v1(q, img, hOutputImage, filter, filterWidth, height, width, channels);
   } catch (exception const &e) {
