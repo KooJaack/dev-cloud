@@ -138,9 +138,9 @@ void ImageConv_v1(queue &q, unsigned char *image_in, char *image_out, float *fil
         }
          
         /* Write the new pixel value */
-        dstPtr[row*ImageCols+col*Channels] = sum;
-		dstPtr[row*ImageCols+col*Channels+1] = sum;
-		dstPtr[row*ImageCols+col*Channels+2] = sum;
+        dstPtr[row*ImageCols*Channels+col*Channels] = sum;
+		dstPtr[row*ImageCols*Channels+col*Channels+1] = sum;
+		dstPtr[row*ImageCols*Channels+col*Channels+2] = sum;
       } 
     );
   });
