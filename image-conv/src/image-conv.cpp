@@ -58,10 +58,10 @@ typedef std::array<float, array_size> FloatArray;
 //************************************
 // Image Convolution in DPC++ on device: 
 //************************************
-void ImageConv_v1(queue &q, char *image_in, char *image_out, float *filter_in, 
+void ImageConv_v1(queue &q, unsigned char *image_in, char *image_out, float *filter_in, 
     const size_t FilterWidth, const size_t ImageRows, const size_t ImageCols, const size_t Channels) 
 {
-    buffer<char, 1> image_in_buf(image_in, range<1>(ImageRows*ImageCols*Channels));
+    buffer<unsigned char, 1> image_in_buf(image_in, range<1>(ImageRows*ImageCols*Channels));
     buffer<char, 1> image_out_buf(image_out, range<1>(ImageRows*ImageCols*Channels));
 
     range<2> pixelsRange{ImageRows, ImageCols};
@@ -241,8 +241,6 @@ printf("Loaded image with a width of %dpx, a height of %dpx and %d channels\n", 
   for(i=0; i<imageRows*imageCols*channels; i++)
     hOutputImage[i] = 0;
     // Image convolution in DPC++
-	char *img2;
-	img2 = img;
     ImageConv_v1(q, img2, hOutputImage, filter, filterWidth, height, width, channels);
 	
 	stbi_write_png("sky.png", width, height, channels, hOutputImage, width * channels);    
