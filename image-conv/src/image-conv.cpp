@@ -58,7 +58,7 @@ typedef std::array<float, array_size> FloatArray;
 //************************************
 // Image Convolution in DPC++ on device: 
 //************************************
-void ImageConv_v1(queue &q, float *image_in, float *image_out, float *filter_in, 
+void ImageConv_v1(queue &q, char *image_in, char *image_out, float *filter_in, 
     const size_t FilterWidth, const size_t ImageRows, const size_t ImageCols, const size_t Channels) 
 {
     buffer<float, 1> image_in_buf(image_in, range<1>(ImageRows*ImageCols*Channels));
