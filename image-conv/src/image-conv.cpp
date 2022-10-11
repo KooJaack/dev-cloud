@@ -266,7 +266,7 @@ printf("Loaded image with a width of %dpx, a height of %dpx and %d channels\n", 
   bool passed = true;
   for (i = 0; i < imageRows*imageCols; i++) {
     if (fabsf(refOutput[i]-hOutputImage[i]) > 0.001f) {
-        printf("%f %f\n", refOutput[i], hOutputImage[i]);
+        printf("%f %s\n", refOutput[i], hOutputImage[i]);
         passed = false;
     }
   }
