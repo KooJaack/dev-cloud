@@ -145,8 +145,6 @@ void ImageConv_v1(queue &q, float *image_in, float *image_out, float *filter_in,
       } 
     );
   });
-  
-	stbi_write_png("sky.png", ImageCols, ImageRows, Channels, dstPtr, ImageCols * Channels);    
 }
 
 
@@ -221,9 +219,6 @@ int main() {
   printf("imageRows=%d, imageCols=%d\n", imageRows, imageCols);
   printf("filterWidth=%d, \n", filterWidth);
   /* Allocate space for the output image */
-  hOutputImage = (float *)malloc( imageRows*imageCols * sizeof(float) );
-  for(i=0; i<imageRows*imageCols; i++)
-    hOutputImage[i] = 1234.0;
 
 
   Timer t;
@@ -242,8 +237,12 @@ int main() {
 	exit(1);
 	}
 printf("Loaded image with a width of %dpx, a height of %dpx and %d channels\n", width, height, channels);
+  hOutputImage = (float *)malloc( imageRows*imageCols * channels * sizeof(char) );
+  for(i=0; i<imageRows*imageCols*channels; i++)
+    hOutputImage[i] = 0;
     // Image convolution in DPC++
     ImageConv_v1(q, img, hOutputImage, filter, filterWidth, height, width, channels);
+	stbi_write_png("sky.png", ImageCols, ImageRows, Channels, hOutputImage, ImageCols * Channels);    
   } catch (exception const &e) {
     std::cout << "An exception is caught for image convolution.\n";
     std::terminate();
