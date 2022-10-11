@@ -203,6 +203,7 @@ int main() {
 	  filterWidth = edgeSobelVerticalWidth;
 	  filterFactor = edgeSobelVerticalFactor;
 	  filter = edgeSobelVertical;
+	  break;
     default:
       printf("Invalid filter selection.\n");
       return 1;
