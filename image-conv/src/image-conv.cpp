@@ -235,13 +235,15 @@ int main() {
 	exit(1);
 	}
 printf("Loaded image with a width of %dpx, a height of %dpx and %d channels\n", width, height, channels);
+stbi_write_jpg("test.jpg", width, height, channels, img, width * channels);   
   hOutputImage = (char *)malloc( imageRows*imageCols * channels * sizeof(char) );
+  printf("Channels: %i", channels);
   for(i=0; i<imageRows*imageCols*channels; i++)
     hOutputImage[i] = 0;
     // Image convolution in DPC++
     ImageConv_v1(q, img, hOutputImage, filter, filterWidth, height, width, channels);
 	
-	stbi_write_png("sky.png", width, height, channels, hOutputImage, width * channels);    
+	stbi_write_jpg("dogcringe.jpg", width, height, channels, hOutputImage, width * channels);    
   } catch (exception const &e) {
     std::cout << "An exception is caught for image convolution.\n";
     std::terminate();
@@ -254,26 +256,26 @@ printf("Loaded image with a width of %dpx, a height of %dpx and %d channels\n", 
 
 #ifndef FPGA_PROFILE
   /* Verify result */
-  float *refOutput = convolutionGoldFloat(hInputImage, imageRows, imageCols,
-    filter, filterWidth);
+  // float *refOutput = convolutionGoldFloat(hInputImage, imageRows, imageCols,
+    // filter, filterWidth);
 
-  writeBmpFloat(refOutput, "cat-filtered-ref.bmp", imageRows, imageCols,
-          inputImagePath);
+  // writeBmpFloat(refOutput, "cat-filtered-ref.bmp", imageRows, imageCols,
+          // inputImagePath);
 
-  bool passed = true;
-  for (i = 0; i < imageRows*imageCols; i++) {
-    if (fabsf(refOutput[i]-hOutputImage[i]) > 0.001f) {
-        printf("%f %c\n", refOutput[i], hOutputImage[i]);
-        passed = false;
-    }
-  }
-  if (passed) {
-    printf("Passed!\n");
-    std::cout << "Image Convolution successfully completed on device.\n";
-  }
-  else {
-    printf("Failed!\n");
-  }
+  // bool passed = true;
+  // for (i = 0; i < imageRows*imageCols; i++) {
+    // if (fabsf(refOutput[i]-hOutputImage[i]) > 0.001f) {
+        // printf("%f %c\n", refOutput[i], hOutputImage[i]);
+        // passed = false;
+    // }
+  // }
+  // if (passed) {
+    // printf("Passed!\n");
+    // std::cout << "Image Convolution successfully completed on device.\n";
+  // }
+  // else {
+    // printf("Failed!\n");
+  // }
 #endif
 
   return 0;
