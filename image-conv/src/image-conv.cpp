@@ -125,13 +125,13 @@ void ImageConv_v1(queue &q, unsigned char *image_in, char *image_out, float *fil
               r = (r >= ImageRows) ? ImageRows-1 : r;
               c = (c >= ImageCols) ? ImageCols-1 : c;       
 			  
-              sum += srcPtr[r*ImageCols+c*Channels] *
+              sum += srcPtr[r*ImageCols*Channels+c*Channels] *
                     f_acc[(k+halfFilterWidth)*FilterWidth + 
                         (l+halfFilterWidth)];
-			  sum2 += srcPtr[r*ImageCols+(c*Channels)+1] *
+			  sum2 += srcPtr[r*ImageCols*Channels+(c*Channels)+1] *
                     f_acc[(k+halfFilterWidth)*FilterWidth + 
                         (l+halfFilterWidth)];
-			  sum3 += srcPtr[r*ImageCols+(c*Channels)+2] *
+			  sum3 += srcPtr[r*ImageCols*Channels+(c*Channels)+2] *
                     f_acc[(k+halfFilterWidth)*FilterWidth + 
                         (l+halfFilterWidth)];
           }
