@@ -231,7 +231,7 @@ int main() {
               << q.get_device().get_info<info::device::name>() << "\n";
 
 	int width, height, channels;
-	unsigned char *img = stbi_load("./Images/dog1.jpg", &width, &height, &channels, 0);
+	char *img = stbi_load("./Images/dog1.jpg", &width, &height, &channels, 0);
 	if(img == NULL) {
 	printf("Error in loading the image\n");
 	exit(1);
@@ -266,7 +266,7 @@ printf("Loaded image with a width of %dpx, a height of %dpx and %d channels\n", 
   bool passed = true;
   for (i = 0; i < imageRows*imageCols; i++) {
     if (fabsf(refOutput[i]-hOutputImage[i]) > 0.001f) {
-        printf("%f %s\n", refOutput[i], hOutputImage[i]);
+        printf("%f %c\n", refOutput[i], hOutputImage[i]);
         passed = false;
     }
   }
