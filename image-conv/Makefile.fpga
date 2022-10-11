@@ -2,7 +2,7 @@ CXX := dpcpp
 CXXFLAGS = -O2 -g -std=c++17
 CXXINC = -Isrc/Utils
 
-SRC := src/image-conv.cpp src/Utils/bmp-utils.c src/Utils/gold.c src/Utils/utils.c Timer.cpp
+SRC := src/image-conv.cpp src/Utils/bmp-utils.c src/Utils/gold.c src/Utils/utils.c
 
 .PHONY: fpga_emu run_emu clean 
 
