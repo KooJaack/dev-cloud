@@ -101,7 +101,7 @@ void ImageConv_v1(queue &q, unsigned char *image_in, char *image_out, float *fil
               for(int i = 0; i < 3; i++)
               {
                 sum[i] += (int)srcPtr[r*ImageCols*Channels+(c*Channels)+i] *
-                    (int)[(k+halfFilterWidth)*FilterWidth + 
+                    (int)f_acc[(k+halfFilterWidth)*FilterWidth + 
                         (l+halfFilterWidth)];
               }
           }
