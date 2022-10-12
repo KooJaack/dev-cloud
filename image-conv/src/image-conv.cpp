@@ -100,8 +100,8 @@ void ImageConv_v1(queue &q, unsigned char *image_in, char *image_out, float *fil
               #pragma unroll
               for(int i = 0; i < 3; i++)
               {
-                sum[i] += srcPtr[r*ImageCols*Channels+(c*Channels)+i] *
-                    f_acc[(k+halfFilterWidth)*FilterWidth + 
+                sum[i] += (int)srcPtr[r*ImageCols*Channels+(c*Channels)+i] *
+                    (int))[(k+halfFilterWidth)*FilterWidth + 
                         (l+halfFilterWidth)];
               }
           }
