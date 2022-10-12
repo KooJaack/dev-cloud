@@ -189,10 +189,11 @@ int main()
     hOutputImage = (char *)malloc(imageRows * imageCols * channels * sizeof(char));
     for (i = 0; i < imageRows * imageCols * channels; i++)
       hOutputImage[i] = 0;
-
+    printf("Memory for output image has been allocated.\n");
     // Image convolution in DPC++
     ImageConv_v1(q, img, hOutputImage, filter, filterWidth, height, width, channels);
 
+    printf("Convolution finished. Save file.\n");
     stbi_write_jpg("dogcringe.jpg", width, height, channels, hOutputImage, width * channels);
   }
   catch (exception const &e)
