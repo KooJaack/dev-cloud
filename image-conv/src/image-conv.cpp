@@ -15,24 +15,7 @@ using namespace sycl;
 #include "utils.h"
 #include "bmp-utils.h"
 #include "gold.h"
-
-static const char *inputImagePath = "./Images/cat.bmp";
-
-static float gaussianBlurFilterFactor = 273.0f;
-static float gaussianBlurFilter[25] = {
-    1.0f, 4.0f, 7.0f, 4.0f, 1.0f,
-    4.0f, 16.0f, 26.0f, 16.0f, 4.0f,
-    7.0f, 26.0f, 41.0f, 26.0f, 7.0f,
-    4.0f, 16.0f, 26.0f, 16.0f, 4.0f,
-    1.0f, 4.0f, 7.0f, 4.0f, 1.0f};
-static const int gaussianBlurFilterWidth = 5;
-
-static float edgeSobelHorizontalFactor = 1.0f;
-static float edgeSobelHorizontal[9] = {
-    1.0f, 1.0f, 1.0f,
-    0.0f, 0.0f, 0.0f,
-    1.0f, 1.0f, 1.0f};
-static const int edgeSobelHorizontalWidth = 3;
+#include "Filters.h"
 
 static float edgeSobelVerticalFactor = 1.0f;
 static float edgeSobelVertical[9] = {
@@ -43,20 +26,11 @@ static const int edgeSobelVerticalWidth = 3;
 
 enum filterList
 {
-  GAUSSIAN_BLUR,
-  SOBEl_HORIZONTAL,
   SOBEL_VERTICAL,
 };
 
 static const int filterSelection = SOBEL_VERTICAL;
 
-#define IMAGE_SIZE (602 * 380)
-constexpr size_t array_size = IMAGE_SIZE;
-typedef std::array<float, array_size> FloatArray;
-
-//************************************
-// Image Convolution in DPC++ on device:
-//************************************
 void ImageConv_v1(queue &q, unsigned char *image_in, char *image_out, float *filter_in,
                   const size_t FilterWidth, const size_t ImageRows, const size_t ImageCols, const size_t Channels)
 {
@@ -67,7 +41,6 @@ void ImageConv_v1(queue &q, unsigned char *image_in, char *image_out, float *fil
 
   buffer<float, 1> filter_buf(filter_in, range<1>(FilterWidth * FilterWidth));
 
-  /* Compute the filter width (intentionally truncate) */
   int halfFilterWidth = (int)FilterWidth / 2;
 
   // Submit a command group to the queue by a lambda function that contains the
@@ -148,15 +121,11 @@ void ImageConv_v1(queue &q, unsigned char *image_in, char *image_out, float *fil
 
 int main()
 {
-  // Create device selector for the device of your interest.
 #if FPGA_EMULATOR
-  // DPC++ extension: FPGA emulator selector on systems without FPGA card.
   ext::intel::fpga_emulator_selector d_selector;
 #elif FPGA || FPGA_PROFILE
-  // DPC++ extension: FPGA selector on systems with FPGA card.
   ext::intel::fpga_selector d_selector;
 #else
-  // The default device selector will select the most performant device.
   default_selector d_selector;
 #endif
 
@@ -165,7 +134,6 @@ int main()
 
   int imageRows;
   int imageCols;
-  int i;
 
   /* Set the filter here */
   cl_int filterWidth;
@@ -176,31 +144,11 @@ int main()
   // Query about the platform
   unsigned number = 0;
   auto myPlatforms = platform::get_platforms();
-  // loop through the platforms to poke into
-  for (auto &onePlatform : myPlatforms)
-  {
-    std::cout << ++number << " found .." << std::endl
-              << "Platform: "
-              << onePlatform.get_info<info::platform::name>() << std::endl;
-    // loop through the devices
-    auto myDevices = onePlatform.get_devices();
-    for (auto &oneDevice : myDevices)
-    {
-      std::cout << "Device: "
-                << oneDevice.get_info<info::device::name>() << std::endl;
-    }
-  }
-  std::cout << std::endl;
 #endif
 
   // set conv filter
   switch (filterSelection)
   {
-  case GAUSSIAN_BLUR:
-    filterWidth = gaussianBlurFilterWidth;
-    filterFactor = gaussianBlurFilterFactor;
-    filter = gaussianBlurFilter;
-    break;
   case SOBEL_VERTICAL:
     filterWidth = edgeSobelVerticalWidth;
     filterFactor = edgeSobelVerticalFactor;
@@ -215,13 +163,6 @@ int main()
   {
     filter[i] = filter[i] / filterFactor;
   }
-
-  /* Read in the BMP image */
-
-  hInputImage = readBmpFloat(inputImagePath, &imageRows, &imageCols);
-  printf("imageRows=%d, imageCols=%d\n", imageRows, imageCols);
-  printf("filterWidth=%d, \n", filterWidth);
-  /* Allocate space for the output image */
 
   try
   {
@@ -238,17 +179,18 @@ int main()
       printf("Error in loading the image\n");
       exit(1);
     }
-
     printf("Loaded image with a width of %dpx, a height of %dpx and %d channels\n", width, height, channels);
     stbi_write_jpg("test.jpg", width, height, channels, img, width * channels);
+    printf("Reference write image as test.jpg\n");
 
-    hOutputImage = (char *)malloc(imageRows * imageCols * channels * sizeof(char));
-    for (i = 0; i < imageRows * imageCols * channels; i++)
+    hOutputImage = (char *)malloc(height * width * channels * sizeof(char));
+    for (int i = 0; i < height * width * channels; i++)
       hOutputImage[i] = 0;
-
+    printf("Memory for output image has been allocated.\n");
     // Image convolution in DPC++
     ImageConv_v1(q, img, hOutputImage, filter, filterWidth, height, width, channels);
 
+    printf("Convolution finished. Save file.\n");
     stbi_write_jpg("dogcringe.jpg", width, height, channels, hOutputImage, width * channels);
   }
   catch (exception const &e)
@@ -256,7 +198,8 @@ int main()
     std::cout << "An exception is caught for image convolution.\n";
     std::terminate();
   }
-  printf("Output image saved as: cat-filtered.bmp\n");
+
+  printf("Output image saved as: dogcringe.jpg\n");
 
   return 0;
 }
