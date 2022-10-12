@@ -184,7 +184,7 @@ int main()
     }
     printf("Loaded image with a width of %dpx, a height of %dpx and %d channels\n", width, height, channels);
     stbi_write_jpg("test.jpg", width, height, channels, img, width * channels);
-    printf("Reference write image as test.jpg");
+    printf("Reference write image as test.jpg\n");
 
     hOutputImage = (char *)malloc(imageRows * imageCols * channels * sizeof(char));
     for (i = 0; i < imageRows * imageCols * channels; i++)
