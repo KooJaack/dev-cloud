@@ -110,8 +110,8 @@ void ImageConv_v1(queue &q, unsigned char *image_in, char *image_out, float *fil
         for(int i = 0; i < 3; i++)
         {
           char x;
-          if(sum[i] > 255)
-            x = 255;
+          if(sum[i] > 255 || sum[i] < 0)
+            x = (char)255;
           else
             x = (char)sum[i];
 
