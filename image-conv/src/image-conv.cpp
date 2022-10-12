@@ -79,9 +79,7 @@ void ImageConv_v1(queue &q, unsigned char *image_in, char *image_out, float *fil
         // Each work-item iterates around its local area based on the
         // size of the filter 
 
-        char sum = 0;
-		char sum2 = 0;
-		char sum3 = 0;
+        int sum[3] = {0, 0, 0};
 
         /* Apply the filter to the neighborhood */
         for (int k = -halfFilterWidth; k <= halfFilterWidth; k++) 
@@ -97,24 +95,28 @@ void ImageConv_v1(queue &q, unsigned char *image_in, char *image_out, float *fil
               r = (r < 0) ? 0 : r;
               c = (c < 0) ? 0 : c;
               r = (r >= ImageRows) ? ImageRows-1 : r;
-              c = (c >= ImageCols) ? ImageCols-1 : c;       
-			  
-              sum += srcPtr[r*ImageCols*Channels+c*Channels] *
+              c = (c >= ImageCols) ? ImageCols-1 : c;
+
+              #pragma unroll
+              for(int i = 0; i < 3; i++)
+              {
+                sum[i] += srcPtr[r*ImageCols*Channels+(c*Channels)+i] *
                     f_acc[(k+halfFilterWidth)*FilterWidth + 
                         (l+halfFilterWidth)];
-			  sum2 += srcPtr[r*ImageCols*Channels+(c*Channels)+1] *
-                    f_acc[(k+halfFilterWidth)*FilterWidth + 
-                        (l+halfFilterWidth)];
-			  sum3 += srcPtr[r*ImageCols*Channels+(c*Channels)+2] *
-                    f_acc[(k+halfFilterWidth)*FilterWidth + 
-                        (l+halfFilterWidth)];
+              }
           }
         }
-         
-        /* Write the new pixel value */
-        dstPtr[row*ImageCols*Channels+col*Channels] = sum;
-		dstPtr[row*ImageCols*Channels+col*Channels+1] = sum;
-		dstPtr[row*ImageCols*Channels+col*Channels+2] = sum;
+        #pragma unroll
+        for(int i = 0; i < 3; i++)
+        {
+          char x;
+          if(sum[i] > 255 || sum[i] < 0)
+            x = (char)255;
+          else
+            x = (char)sum[i];
+
+          dstPtr[row*ImageCols*Channels+col*Channels+i] = x;
+        }
       } 
     ); });
 }
