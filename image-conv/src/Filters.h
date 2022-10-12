@@ -8,4 +8,4 @@ public:
 
 private:
     void InitializeFirstLayer();
-}
+};
